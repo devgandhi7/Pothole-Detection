@@ -1,0 +1,62 @@
+#include <SoftwareSerial.h>
+int trigPin = 9;
+int echoPin = 10;
+int led = 7;
+boolean triggered = false;
+SoftwareSerial mySerial(2, 3); //here software serial pin defined
+
+
+
+void setup() {
+  Serial.begin(9600);
+  mySerial.begin(9600); 
+   pinMode(led, OUTPUT);
+   pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  
+
+
+  
+
+}
+
+void loop() {
+  
+  long duration, distance;
+  digitalWrite(trigPin,HIGH);
+  delayMicroseconds(1000);
+  digitalWrite(trigPin, LOW);
+  duration=pulseIn(echoPin, HIGH);
+  distance =(duration/2)/29.1;
+  Serial.print(distance);
+  Serial.println("CM");
+  delay(10);
+ 
+ if((distance<=10)) 
+  {
+    digitalWrite(led, LOW);
+    triggered = false;
+}
+   else if(distance>10)
+ {
+     digitalWrite(led, HIGH);
+     triggered = true;
+   }
+if (triggered)
+{  mySerial.println("AT"); // check connection // read modem response
+    delay(1000);
+    mySerial.println("AT+CMGF=1");// SET MODULE TO TEXT MODE// read modem response
+    delay(1000);
+  mySerial.println("AT+CMGS=\"8208749846\""); // sender mob number // read modem response
+  delay(1000);
+  mySerial.println("pothole detected of " + String(distance) + "Cm"); // enter msg body
+  delay(1000);
+  mySerial.print((char)26); // send msg
+  delay(1000);
+
+} 
+
+}
+
+
+
