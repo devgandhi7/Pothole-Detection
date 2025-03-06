@@ -1,0 +1,97 @@
+#include <SoftwareSerial.h>
+int trigPin = 9;
+int echoPin = 10;
+int led = 7;
+boolean triggered = false;
+SoftwareSerial mySerial(2, 3); //here software serial pin defined
+String Link = "The location of the pothole is https://www.google.com/maps/place/"; //we will append the Lattitude and longitude value later int the program 
+String responce = "";
+String Longitude = "";
+String Latitude = ""; 
+
+
+ void prepare_message()
+{
+  //Sample Output for AT+CIPGSMLOC=1,1   ==> +CIPGSMLOC: 0,75.802460,26.848892,2019/04/23,08:32:35 //where 26.8488832 is Lattitude and 75.802460 is longitute 
+  int first_comma = responce.indexOf(','); //Find the position of 1st comma 
+  int second_comma = responce.indexOf(',', first_comma+1); //Find the position of 2nd comma 
+  int third_comma = responce.indexOf(',', second_comma+1); //Find the position of 3rd comma 
+
+  for(int i=first_comma+1; i<second_comma; i++) //Values form 1st comma to 2nd comma is Longitude 
+    Longitude = Longitude + responce.charAt(i); 
+
+  for(int i=second_comma+1; i<third_comma; i++) //Values form 2nd comma to 3rd comma is Latitude 
+    Latitude = Latitude + responce.charAt(i); 
+
+  Serial.println(Latitude); Serial.println(Longitude); 
+  Link = Link + Latitude + "," + Longitude; //Update the Link with latitude and Logitude values 
+  Serial.println(Link);
+}
+void setup() {
+  Serial.begin(9600);
+  mySerial.begin(9600); 
+   pinMode(led, OUTPUT);
+   pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+
+
+  
+
+}
+
+void loop() {
+  
+  long duration, distance;
+  digitalWrite(trigPin,HIGH);
+  delayMicroseconds(1000);
+  digitalWrite(trigPin, LOW);
+  duration=pulseIn(echoPin, HIGH);
+  distance =(duration/2)/29.1;
+  Serial.print(distance);
+  Serial.println("CM");
+  delay(10);
+ 
+ if((distance<=10)) 
+  {
+    digitalWrite(led, LOW);
+    triggered = false;
+}
+   else if(distance>10)
+ {
+     digitalWrite(led, HIGH);
+     triggered = true;
+   }
+if (triggered)
+{  mySerial.println("AT"); // check connection // read modem response
+    delay(1000);
+    mySerial.println("AT+CGATT=1");
+    mySerial.println("AT+SAPBR=3,1,”Contype”,”GPRS”"); //set connection type to gprs mode 
+    mySerial.println("AT+SAPBR=3,1,”APN”,”www”");// set apn to www for vodafone
+    mySerial.println("AT+SAPBR=2,1");
+    mySerial.println("AT+SAPBR =1,1"); //enable gprs
+    mySerial.println("AT+CIPGSMLOC=1,1"); // retreive location
+     delay(5000);
+     while (mySerial.available()) 
+      {
+       char letter = mySerial.read();
+       responce = responce + String(letter); //Store the location information in string responce 
+      }
+      Serial.print("Result Obtained as:");   Serial.print(responce); Serial.println("*******");
+
+     
+    prepare_message(); delay(1000); //use prepare_message funtion to prepare the link with the obtained LAT and LONG co-ordinates 
+    mySerial.println("AT+CMGF=1");// SET MODULE TO TEXT MODE// read modem response
+    delay(1000);
+  mySerial.println("AT+CMGS=\"8208298634\""); // sender mob number // read modem response
+  delay(1000);
+  mySerial.println("pothole detected of " + String(distance) + "Cm");// enter msg body
+  mySerial.println(Link);
+  delay(1000);
+  mySerial.print((char)26); // send msg
+  delay(1000);
+
+} 
+
+}
+
