@@ -44,7 +44,7 @@ The system integrates the following components:
 Example SMS message:
 
 ```
-Pothole of volume 3 x 3 x 3 feet at coordinates: 21.1458, 79.0882
+Pothole of volume 3 x 3 x 3 feet cube at coordinates: 21.1458, 79.0882
 ```
 
 Data is also available on the ThinkSpeak dashboard for visualization and analysis.
